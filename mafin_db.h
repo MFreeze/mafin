@@ -18,21 +18,18 @@
 
 #ifndef MAFIN_DB_H
 
+// Base Tables
+#define ACC_TABLE "create table Accounts(AccId int primary key, Label varchar(256) not null, InitBal float not null);"
+#define PROD_TABLE "create table Products(ProdId int primary key, Label varchar(256) not null);" 
+#define OP_TABLE "create table Operations(OpId int primary key, Amount float not null, ProdId int not null, foreign key(ProdId) references Products(ProdId));"
+
+// Joint Tables
+#define PR_OP_JOINT "create table OpJointProd(OpId int not null, ProdId int not null, foreign key(OpId) references Operations(OpId), foreign key(ProdId) references Products(ProdId));"
+
 #include <sqlite3.h>
+#include <stdlib.h>
+#include "debug.h"
 
     int
-init_database(const char *db_path)
-{
-    sqlite3 *db;
-    int return_code = sqlite3_open(DATABASE_FILE, &db);
-
-    if (return_code != SQLITE_OK)
-    {
-        fprintf(stderr, "Error: %s\n", sqlite3_errmsg(database));
-        return 0;
-    }
-
-    sqlite3_close(db);
-}
-
+init_database(const char *db_path);
 #endif
