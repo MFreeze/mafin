@@ -26,7 +26,7 @@ main (int argc, char **argv)
 {
     // TODO Management of the options
     int return_code = Initialize_Database(DATABASE_FILE);
-    if (!return_code)
+    if (return_code != SUCCESS)
     {
         fprintf(stderr, "Error while opening database: %s\n", DATABASE_FILE);
         return EXIT_FAILURE;
@@ -35,6 +35,7 @@ main (int argc, char **argv)
     printf("Open database ok\n");
 
     Add_Account("Test", 12.8, NULL);
+    Add_Account("Pouet", 1400, "1349BM24");
     Add_Account("Pouet", 1400, "1349BM24");
     Add_Account("Poueta", 1400, "1349BM24");
 

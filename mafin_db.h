@@ -63,8 +63,11 @@
  *  Error Code
  *-----------------------------------------------------------------------------*/
 
-#define ALREADY_IN_TABLE -1
-#define NO_ENTRY_FOUND -2
+#define SUCCESS 0
+#define UNDEFINED_ERROR 1
+#define ALREADY_IN_TABLE 2
+#define NO_ENTRY_FOUND 3
+#define NULL_FIELD 4
 
 
 /*-----------------------------------------------------------------------------
@@ -87,7 +90,7 @@
 
 #include <sqlite3.h>
 #include <stdlib.h>
-//#include <glib.h>
+#include <glib.h>
 #include <errno.h>
 #include "debug.h"
 
@@ -118,6 +121,7 @@ typedef struct product_t
 
 extern sqlite3 *g_db;
 extern int mafin_db_return_code;
+extern int mafin_db_extended_return_code;
 
 
 /*-----------------------------------------------------------------------------
@@ -139,7 +143,6 @@ Close_Database()
  *-----------------------------------------------------------------------------*/
     int
 Add_Account(const char *label, double init_balance, const char iban[35]);
-#endif
 
 
 /*-----------------------------------------------------------------------------
@@ -147,3 +150,5 @@ Add_Account(const char *label, double init_balance, const char iban[35]);
  *-----------------------------------------------------------------------------*/
     int
 Get_Account_From_Id(int account_id, Account *result);
+
+#endif

@@ -23,6 +23,7 @@
 
 sqlite3 *g_db = NULL;
 int mafin_db_return_code;
+int mafin_db_extended_return_code;
 
 /*-----------------------------------------------------------------------------
  *  Internal Functions
@@ -33,7 +34,7 @@ int mafin_db_return_code;
  *         Name:  Open_File
  *  Description:  Test if a file can be opened
  *   Parameters:  const char *path: the path of the file
- *       Return:  0 if the file cannot be opened, 1 otherwise
+ *       Return:  SUCCESS if file can be opened, UNDEFINED_ERROR otherwise
  * =====================================================================================
  */
     int
@@ -41,62 +42,11 @@ Open_File (const char *path)
 {
     FILE *pfile = fopen(path, "r");
     if (!pfile)
-        return 0;
+        return UNDEFINED_ERROR;
     fclose(pfile);
-    return 1;
+    return SUCCESS;
 }		/* -----  end of function File_Exists  ----- */
 
-
-/* 
- * ===  FUNCTION  ======================================================================
- *         Name:  Exec_Request
- *  Description:  Execute a simple request with no returns
- *                  1. Compile the SQL statement
- *                  2. Execute the statement
- *                  3. Reset
- *   Parameters:  * const char *request: the request to compile
- *                * const char *function_name: function name in which this procedure is
- *                      called
- *       Return:  0 if an error occurs, 1 otherwise
- * =====================================================================================
- */
-// XXX This function should not be used as it does the same as sqlite3_exec in worst...
-    int
-Exec_Request(const char *request, const char *function_name)
-{
-    IS_INITIALIZED;
-
-    sqlite3_stmt *req;
-
-    // Prepare the request
-    mafin_db_return_code = sqlite3_prepare_v2(g_db, request, -1, &req, NULL);
-    if (mafin_db_return_code != SQLITE_OK)
-    {
-        fprintf(stderr, "[%s.sqlite3_prepare_v2] Error: %s\n", function_name, sqlite3_errmsg(g_db));
-        return 0;
-    }
-
-    // Execute the request 
-    // TODO Better handle of the error
-    mafin_db_return_code = sqlite3_step(req);
-    if (mafin_db_return_code != SQLITE_DONE)
-    {
-        fprintf(stderr, "[%s.sqlite3_step] Error: %s\n", function_name, sqlite3_errmsg(g_db));
-        // Delete the statement and store the ERROR code in mafin_db_return_code
-        mafin_db_return_code = sqlite3_finalize(req);
-        return 0;
-    }
-
-    // Delete the statement
-    mafin_db_return_code = sqlite3_finalize(req);
-    if (mafin_db_return_code != SQLITE_OK)
-    {
-        fprintf(stderr, "[%s.sqlite3_step] Error: %s\n", function_name, sqlite3_errmsg(g_db));
-        return 0;
-    }
-
-    return 1;
-}		/* -----  end of function Exec_Request  ----- */
 
 
 /* 
@@ -104,7 +54,7 @@ Exec_Request(const char *request, const char *function_name)
  *         Name:  Create_Database
  *  Description:  Creates the database and populates it with tables
  *   Parameters:  
- *       Return:  0 if an error occurs, 1 otherwise
+ *       Return:  The appropriate code
  * =====================================================================================
  */
     int
@@ -112,45 +62,53 @@ Create_Database()
 {
     IS_INITIALIZED;
 
-    int return_code;
+    char *errmsg;
 
     // (Account table) create the table
-    return_code = Exec_Request(ACC_TABLE, "(Account) init_database");
     DEB_PRINT("%s\n", ACC_TABLE);
-    if (!return_code)
+    mafin_db_return_code = sqlite3_exec(g_db, ACC_TABLE, NULL, NULL, &errmsg);
+    if (mafin_db_return_code != SQLITE_OK)
     {
+        fprintf(stderr, "[Create_Database.exec] Cannot create Accounts table: %s\n", errmsg);
+        sqlite3_free(errmsg);
         sqlite3_close(g_db);
-        return 0;
+        return UNDEFINED_ERROR;
     }
 
     // (Product Table) 
-    return_code = Exec_Request(PROD_TABLE, "(Product) init_database");
     DEB_PRINT("%s\n", PROD_TABLE);
-    if (!return_code)
+    mafin_db_return_code = sqlite3_exec(g_db, PROD_TABLE, NULL, NULL, &errmsg);
+    if (mafin_db_return_code != SQLITE_OK)
     {
+        fprintf(stderr, "[Create_Database.exec] Cannot create Products table: %s\n", errmsg);
+        sqlite3_free(errmsg);
         sqlite3_close(g_db);
-        return 0;
+        return UNDEFINED_ERROR;
     }
 
     // (Operations Table) 
-    return_code = Exec_Request(OP_TABLE, "(Operations) init_database");
     DEB_PRINT("%s\n", OP_TABLE);
-    if (!return_code)
+    mafin_db_return_code = sqlite3_exec(g_db, OP_TABLE, NULL, NULL, &errmsg);
+    if (mafin_db_return_code != SQLITE_OK)
     {
+        fprintf(stderr, "[Create_Database.exec] Cannot create Operations table: %s\n", errmsg);
+        sqlite3_free(errmsg);
         sqlite3_close(g_db);
-        return 0;
+        return UNDEFINED_ERROR;
     }
 
     // (Joint Table) 
-    return_code = Exec_Request(PR_OP_JOINT, "(Joint) init_database");
     DEB_PRINT("%s\n", PR_OP_JOINT);
-    if (!return_code)
+    mafin_db_return_code = sqlite3_exec(g_db, PR_OP_JOINT, NULL, NULL, &errmsg);
+    if (mafin_db_return_code != SQLITE_OK)
     {
+        fprintf(stderr, "[Create_Database.exec] Cannot create Joint table: %s\n", errmsg);
+        sqlite3_free(errmsg);
         sqlite3_close(g_db);
-        return 0;
+        return UNDEFINED_ERROR;
     }
 
-    return 1;
+    return SUCCESS;
 }		/* -----  end of function Create_Database  ----- */
 
 
@@ -190,7 +148,7 @@ Fill_Account_Struct (void *data, int nbcol, char **col_vals, char **col_names)
         else if (!strcmp(col_names[i], "InitBal"))
             account->initial_balance = atof(col_vals[i]);
     }
-	return 0;
+	return SUCCESS;
 }		/* -----  end of function Fill_Account_Struct  ----- */
 
 
@@ -220,10 +178,10 @@ Initialize_Database (const char *g_db_path)
         return 0;
     }
 
-    if (!exists)
+    if (exists == UNDEFINED_ERROR)
         return(Create_Database());
 
-	return 1;
+	return SUCCESS;
 }		/* -----  end of function Initialize_Database  ----- */
 
 
@@ -246,6 +204,7 @@ Initialize_Database (const char *g_db_path)
 Add_Account (const char label[257], double init_balance, const char iban[35])
 {
     char request[MAX_REQ_SIZE], buf[MAX_REQ_SIZE];
+    char *err_msg;
 
     // No need to test if the string has been truncated until the user values are used
     SNPRINTF(request, MAX_REQ_SIZE, "insert into Accounts(Label, InitBal");
@@ -269,7 +228,30 @@ Add_Account (const char label[257], double init_balance, const char iban[35])
     strncpy(request, buf, MAX_REQ_SIZE);
 
     PRINTSTR(request);
-    return Exec_Request(request, "Add_Account");
+
+    mafin_db_return_code = sqlite3_exec(g_db, request, NULL, NULL, &err_msg);
+    DEB_PRINT("Return code : %d\n", mafin_db_return_code);
+    switch(mafin_db_return_code)
+    {
+        case SQLITE_OK:
+            return 1;
+        case SQLITE_CONSTRAINT:
+            // Print Error message
+            fprintf(stderr, "[Add_Account.exec] %s\n", err_msg);
+            sqlite3_free(err_msg);
+
+            // Get the extended code
+            mafin_db_extended_return_code = sqlite3_extended_errcode(g_db);
+            if (mafin_db_extended_return_code == SQLITE_CONSTRAINT_UNIQUE || mafin_db_extended_return_code == SQLITE_CONSTRAINT_PRIMARYKEY)
+                return ALREADY_IN_TABLE;
+            if (mafin_db_extended_return_code == SQLITE_CONSTRAINT_NOTNULL)
+                return NULL_FIELD;
+            return 0;
+        default:
+            fprintf(stderr, "[Add_Account.exec] %s\n", err_msg);
+            sqlite3_free(err_msg);
+            return 0;
+    }
 }		/* -----  end of function Add_Account  ----- */
 
 
