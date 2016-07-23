@@ -33,6 +33,24 @@ main (int argc, char **argv)
     }
 
     printf("Open database ok\n");
+
+    Add_Account("Test", 12.8, NULL);
+    Add_Account("Pouet", 1400, "1349BM24");
+    Add_Account("Poueta", 1400, "1349BM24");
+
+    Account a;
+    memset(&a, 0, sizeof(Account));
+    PRINTACC(a);
+
+    return_code = Get_Account_From_Id(1, &a);
+    if (return_code == NO_ENTRY_FOUND)
+        DEB_PRINT("Id 1 not found.\n");
+    PRINTACC(a);
+
+    return_code = Get_Account_From_Id(4, &a);
+    if (return_code == NO_ENTRY_FOUND)
+        DEB_PRINT("Id 4 not found.\n");
+    PRINTACC(a);
     
     Close_Database();
     return EXIT_SUCCESS;
