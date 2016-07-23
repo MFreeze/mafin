@@ -3,7 +3,7 @@
 
 include config.mk
 
-SRC = mafin.c
+SRC = mafin.c mafin_db.c debug.c
 OBJ = ${SRC:.c=.o}
 
 all: options mafin
