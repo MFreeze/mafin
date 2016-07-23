@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include "mafin_db.h"
 
-#define DATABASE_FILE "mafin.sql"
+#define DATABASE_FILE "mafin.db"
 
     int
 exist_file(const char *path)
