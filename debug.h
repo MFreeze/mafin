@@ -40,13 +40,28 @@
 #define PRINTSTR(x) fprintf(stderr, "DEBUG -- %s:%d " #x " = %s\n", __FILE__, __LINE__, x);
 #define OL_PRINTSTR(x) fprintf(stderr, "%s:%d " #x " = %s\n", __FILE__, __LINE__, x);
 
+#define PRINTACC(x) fprintf(stderr, "DEBUG -- %s:%d " #x " : {\n"\
+        "\tId: %d,\n"\
+        "\tLabel: %s,\n"\
+        "\tInitial Balance: %lf,\n"\
+        "\tIban: %s\n"\
+        "}\n", __FILE__, __LINE__, x.account_id, x.label, x.initial_balance, x.iban);
+#define OL_PRINTACC(x) fprintf(stderr, "DEBUG -- %s:%d " #x " : { "\
+        "Id: %d, "\
+        "Label: %s, "\
+        "Initial Balance: %lf, "\
+        "Iban: %s "\
+        "}", __FILE__, __LINE__, x.account_id, x.label, x.initial_balance, x.iban);
+
 #else
 #define DEB_PRINT(...)
 #define PRINTVAR(x)
 #define PRINTSTR(x)
+#define PRINTACC(x)
 #define OL_DEB_PRINT(...)
 #define OL_PRINTVAR(x)
 #define OL_PRINTSTR(x)
+#define OL_PRINTACC(x)
 #endif
 
 #endif
