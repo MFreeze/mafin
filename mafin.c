@@ -22,34 +22,18 @@
 #define DATABASE_FILE "mafin.db"
 
     int
-exist_file(const char *path)
-{
-    FILE *pfile = fopen(path, "r");
-    if (!pfile)
-        return 0;
-    fclose(pfile);
-    return 1;
-}
-
-    int
 main (int argc, char **argv) 
 {
     // TODO Management of the options
-    sqlite3 *database;
-
-    // Test if the database exists
-    if (!exist_file(DATABASE_FILE))
-        init_database(DATABASE_FILE);
-
-    int return_code = sqlite3_open(DATABASE_FILE, &database);
-    if (return_code != SQLITE_OK)
+    int return_code = Initialize_Database(DATABASE_FILE);
+    if (!return_code)
     {
-        fprintf(stderr, "Error: %s\n", sqlite3_errmsg(database));
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "Error while opening database: %s\n", DATABASE_FILE);
+        return EXIT_FAILURE;
     }
 
     printf("Open database ok\n");
     
-    sqlite3_close(database);
+    Close_Database();
     return EXIT_SUCCESS;
 }
