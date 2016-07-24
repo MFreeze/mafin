@@ -52,6 +52,8 @@ main (int argc, char **argv)
     if (return_code == NO_ENTRY_FOUND)
         DEB_PRINT("Id 4 not found.\n");
     PRINTACC(a);
+
+    // TODO Test the Product getters
     
     Close_Database();
     return EXIT_SUCCESS;

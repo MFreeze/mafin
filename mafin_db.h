@@ -18,12 +18,25 @@
 
 #ifndef MAFIN_DB_H
 
-// TODO Use macros for table names?
-// TODO Use macros for table columns?
+/*-----------------------------------------------------------------------------
+ *  Error Code
+ *-----------------------------------------------------------------------------*/
+
+#define SUCCESS 0
+#define UNDEFINED_ERROR 1
+#define ALREADY_IN_TABLE 2
+#define NO_ENTRY_FOUND 3
+#define NULL_FIELD 4
+#define NOT_INITIALIZED 5
+#define REQUEST_TOO_LONG 6
+
 
 /*-----------------------------------------------------------------------------
  *  SQL Macros
  *-----------------------------------------------------------------------------*/
+
+// TODO Use macros for table names?
+// TODO Use macros for table columns?
 
 // Base Tables
 #define ACC_TABLE "create table Accounts(AccId integer primary key, \
@@ -53,35 +66,27 @@
 #define IS_INITIALIZED do {\
     if (!g_db) {\
         fprintf(stderr, "Unitialized database. Run 'Initialize_Database(path/to/db);' first");\
-        return 0;\
+        return NOT_INITIALIZED;\
     }\
 } while (0);
-
-
-
-/*-----------------------------------------------------------------------------
- *  Error Code
- *-----------------------------------------------------------------------------*/
-
-#define SUCCESS 0
-#define UNDEFINED_ERROR 1
-#define ALREADY_IN_TABLE 2
-#define NO_ENTRY_FOUND 3
-#define NULL_FIELD 4
 
 
 /*-----------------------------------------------------------------------------
  *  Other Macros
  *-----------------------------------------------------------------------------*/
 #define MAX_REQ_SIZE 2048
+// TODO Allow the user to execute some code before exiting...
 #define SNPRINTF(str, ...) do {\
     mafin_db_return_code = snprintf(str, ##__VA_ARGS__);\
     if (mafin_db_return_code < 0) {\
-        perror("Something wen wrong");\
-        return 0;\
+        perror("Something went wrong");\
+        return UNDEFINED_ERROR;\
+    }\
+    else if (mafin_db_return_code > MAX_REQ_SIZE){\
+        fprintf(stderr, "Unable to load the request.\n");\
+        return REQUEST_TOO_LONG;\
     }\
 } while (0);
-
 
 
 /*-----------------------------------------------------------------------------
@@ -150,5 +155,15 @@ Add_Account(const char *label, double init_balance, const char iban[35]);
  *-----------------------------------------------------------------------------*/
     int
 Get_Account_From_Id(int account_id, Account *result);
+
+    int
+Get_Product_From_Id(int product_id, Product *result);
+
+
+/*-----------------------------------------------------------------------------
+ *  Test functions
+ *-----------------------------------------------------------------------------*/
+    int
+Populate_DB();
 
 #endif

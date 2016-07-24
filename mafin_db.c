@@ -116,6 +116,7 @@ Create_Database()
  *  Callbacks
  *-----------------------------------------------------------------------------*/
 
+// TODO Use dichotomy to reduce the number of tests
 /* 
  * ===  FUNCTION  ======================================================================
  *         Name:  Fill_Account_Struct
@@ -152,6 +153,39 @@ Fill_Account_Struct (void *data, int nbcol, char **col_vals, char **col_names)
 }		/* -----  end of function Fill_Account_Struct  ----- */
 
 
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  Fill_Product_Struct
+ *  Description:  Fill a Product Structure with the last returned result of the select
+ *                  request
+ *   Parameters:  void *data: a pointer on the structure to fill
+ *                int nbcol: the number of columns in the result
+ *                char **col_vals: the value in the column
+ *                char **col_names: the name of the columns
+ *       Return:  SUCCESS
+ * =====================================================================================
+ */
+    static int
+Fill_Product_Struct (void *data, int nbcol, char **col_vals, char **col_names)
+{
+    DEB_PRINT("[Fill_Product_Struct.callback] Got %d columns in the entry\n", nbcol);
+
+    int i;
+    Product *prod = (Product *) data;
+
+    for (i=0; i<nbcol; i++)
+    {
+        if (!strcmp(col_names[i], "ProdId"))
+            prod->product_id = atoi(col_vals[i]);
+        else if (!strcmp(col_names[i], "Label"))
+            strncpy(prod->label, col_vals[i], 257);
+        else if (!strcmp(col_names[i], "FatherProdId") && col_vals[i])
+            prod->father_id = atoi(col_vals[i]);
+    }
+	return SUCCESS;
+}		/* -----  end of function Fill_Product_Struct  ----- */
+
+
 /*-----------------------------------------------------------------------------
  *  Global functions
  *-----------------------------------------------------------------------------*/
@@ -175,7 +209,7 @@ Initialize_Database (const char *g_db_path)
     if (return_code != SQLITE_OK)
     {
         fprintf(stderr, "[init_database.sqlite3_open] Error: %s\n", sqlite3_errmsg(g_db));
-        return 0;
+        return UNDEFINED_ERROR;
     }
 
     if (exists == UNDEFINED_ERROR)
@@ -200,6 +234,7 @@ Initialize_Database (const char *g_db_path)
  *       Return:  0 if an error occurs, 1 otherwise
  * =====================================================================================
  */
+// TODO Use the dedicated structure
     int
 Add_Account (const char label[257], double init_balance, const char iban[35])
 {
@@ -272,6 +307,8 @@ Add_Account (const char label[257], double init_balance, const char iban[35])
     int
 Get_Account_From_Id (int account_id, Account *result)
 {
+    IS_INITIALIZED;
+
     char request[MAX_REQ_SIZE];
     char *err_msg;
 
@@ -285,14 +322,68 @@ Get_Account_From_Id (int account_id, Account *result)
     {
         fprintf(stderr, "[Get_Account_From_Id.exec] %s\n", err_msg);
         sqlite3_free(err_msg);
-        return 0;
+        return UNDEFINED_ERROR;
     }
 
     if (tmp.account_id)
     {
         memcpy(result, &tmp, sizeof(Account));
-        return 1;
+        return SUCCESS;
     }
 
 	return NO_ENTRY_FOUND;
 }		/* -----  end of function Get_Account_From_Id  ----- */
+
+
+/* 
+ * ===  FUNCTION  ======================================================================
+ *         Name:  Get_Product_From_Id
+ *  Description:  Fill a product structure from an id
+ *   Parameters:  int product_id: the id of the product to fetch
+ *                Product *result: a pointer on the product structure to fill
+ *       Return:  SUCCESS if succeed, the appropriate error code otherwise
+ * =====================================================================================
+ */
+    int
+Get_Product_From_Id (int product_id, Product *result)
+{
+    IS_INITIALIZED;
+
+    Product tmp;
+    memset(&tmp, 0, sizeof(Product));
+
+    char request[MAX_REQ_SIZE];
+    char *err_msg;
+    SNPRINTF(request, MAX_REQ_SIZE, "select * from Products wher ProdId = %d;", product_id);
+
+    mafin_db_return_code = sqlite3_exec(g_db, request, Fill_Product_Struct, (void *) &tmp, &err_msg);
+    if (mafin_db_return_code != SQLITE_OK)
+    {
+        DEB_PRINT("[Get_Product_From_Id.exec] %s\n", err_msg);
+        sqlite3_free(err_msg);
+        return UNDEFINED_ERROR;
+    }
+
+    if (tmp.product_id)
+    {
+        memcpy(result, &tmp, sizeof(Product));
+        return SUCCESS;
+    }
+
+	return NO_ENTRY_FOUND;
+}		/* -----  end of function Get_Product_From_Id  ----- */
+
+
+
+/*-----------------------------------------------------------------------------
+ *  Test Functions
+ *-----------------------------------------------------------------------------*/
+// No documentation for these functions
+/*     int
+ * Populate_DB()
+ * {
+ *     IS_INITIALIZED;
+ * 
+ * 
+ * }
+ */
