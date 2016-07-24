@@ -179,8 +179,13 @@ Fill_Product_Struct (void *data, int nbcol, char **col_vals, char **col_names)
             prod->product_id = atoi(col_vals[i]);
         else if (!strcmp(col_names[i], "Label"))
             strncpy(prod->label, col_vals[i], 257);
-        else if (!strcmp(col_names[i], "FatherProdId") && col_vals[i])
-            prod->father_id = atoi(col_vals[i]);
+        else if (!strcmp(col_names[i], "FatherProdId"))
+        {
+            if (col_vals[i])
+                prod->father_id = atoi(col_vals[i]);
+            else
+                prod->father_id = 0;
+        }
     }
 	return SUCCESS;
 }		/* -----  end of function Fill_Product_Struct  ----- */
@@ -228,36 +233,33 @@ Initialize_Database (const char *g_db_path)
  * ===  FUNCTION  ======================================================================
  *         Name:  Add_Account
  *  Description:  Add a new account to the database
- *   Parameters:  const char label[257]: Label of the account
- *                double init_balance: Initial balance of the account
- *                const char iban[35]: IBAN code of the account
+ *   Parameters:  const Account *account: the structure to add to the database
  *       Return:  0 if an error occurs, 1 otherwise
  * =====================================================================================
  */
 // TODO Use the dedicated structure
     int
-Add_Account (const char label[257], double init_balance, const char iban[35])
+Add_Account (const Account *account)
 {
     char request[MAX_REQ_SIZE], buf[MAX_REQ_SIZE];
     char *err_msg;
 
     // No need to test if the string has been truncated until the user values are used
     SNPRINTF(request, MAX_REQ_SIZE, "insert into Accounts(Label, InitBal");
-    if (iban)
+    if (strcmp(account->iban, ""))
     {
         SNPRINTF(buf, MAX_REQ_SIZE, "%s, Iban", request);
         strncpy(request, buf, MAX_REQ_SIZE);
     }
 
 
-    SNPRINTF(buf, MAX_REQ_SIZE, "%s) values ('%s', %.2lf", request, label, init_balance);
+    SNPRINTF(buf, MAX_REQ_SIZE, "%s) values ('%s', %.2lf", request, account->label, account->initial_balance);
     strncpy(request, buf, MAX_REQ_SIZE);
-    if (iban)
+    if (strcmp(account->iban, ""))
     {
-        SNPRINTF(buf, MAX_REQ_SIZE, "%s, '%s'", request, iban);
+        SNPRINTF(buf, MAX_REQ_SIZE, "%s, '%s'", request, account->iban);
         strncpy(request, buf, MAX_REQ_SIZE);
     }
-
 
     SNPRINTF(buf, MAX_REQ_SIZE, "%s);", request);
     strncpy(request, buf, MAX_REQ_SIZE);
@@ -354,7 +356,7 @@ Get_Product_From_Id (int product_id, Product *result)
 
     char request[MAX_REQ_SIZE];
     char *err_msg;
-    SNPRINTF(request, MAX_REQ_SIZE, "select * from Products wher ProdId = %d;", product_id);
+    SNPRINTF(request, MAX_REQ_SIZE, "select * from Products where ProdId = %d;", product_id);
 
     mafin_db_return_code = sqlite3_exec(g_db, request, Fill_Product_Struct, (void *) &tmp, &err_msg);
     if (mafin_db_return_code != SQLITE_OK)
@@ -379,11 +381,48 @@ Get_Product_From_Id (int product_id, Product *result)
  *  Test Functions
  *-----------------------------------------------------------------------------*/
 // No documentation for these functions
-/*     int
- * Populate_DB()
- * {
- *     IS_INITIALIZED;
- * 
- * 
- * }
- */
+    int
+Populate_DB()
+{
+    IS_INITIALIZED;
+
+    char *err_msg;
+
+    // Accounts
+    Account account;
+    RESET(account, Account);
+
+    FILL_ACCOUNT(account, "Test", 12.8);
+    Add_Account(&account);
+
+    FILL_IBAN_ACCOUNT(account, "Pouet", 1400, "1349BM24");
+    Add_Account(&account);
+
+    FILL_IBAN_ACCOUNT(account, "Pouet", 1400, "1349BM24");
+    Add_Account(&account);
+
+    FILL_IBAN_ACCOUNT(account, "Poueta", 1400, "1349BM24");
+    Add_Account(&account);
+
+    // Products
+    DEB_PRINT("insert into Products(Label) values(\"Supermarché\");\n");
+    mafin_db_return_code = sqlite3_exec(g_db, "insert into Products(Label) values(\"Supermarché\");", NULL, 0, &err_msg);
+    if (mafin_db_return_code != SQLITE_OK)
+    {
+        DEB_PRINT("[Populate_DB.Supermarché] %s\n", err_msg);
+        sqlite3_free(err_msg);
+        return UNDEFINED_ERROR;
+    }
+
+    DEB_PRINT("insert into Products(Label, FatherProdId) values(\"Marché\", 1);\n");
+    mafin_db_return_code = sqlite3_exec(g_db, "insert into Products(Label, FatherProdId) values(\"Marché\", 1);", NULL, 0, &err_msg);
+    if (mafin_db_return_code != SQLITE_OK)
+    {
+        DEB_PRINT("[Populate_DB.Marché] %s\n", err_msg);
+        sqlite3_free(err_msg);
+        return UNDEFINED_ERROR;
+    }
+
+    return SUCCESS;
+}
+

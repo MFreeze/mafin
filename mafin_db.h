@@ -88,6 +88,21 @@
     }\
 } while (0);
 
+#define FILL_ACCOUNT(acc, lab, bal) do {\
+    strncpy(acc.label, lab, 257),\
+    acc.initial_balance = bal;\
+    memset(acc.iban, 0, 35);\
+} while (0);
+
+#define FILL_IBAN_ACCOUNT(acc, lab, bal, ib) do {\
+    strncpy(acc.label, lab, 257),\
+    acc.initial_balance = bal;\
+    strncpy(acc.iban, ib, 35);\
+} while (0);
+
+#define RESET(acc, type) do {\
+    memset(&acc, 0, sizeof(type));\
+} while(0);
 
 /*-----------------------------------------------------------------------------
  *  Includes
@@ -147,7 +162,7 @@ Close_Database()
  *  Add entries
  *-----------------------------------------------------------------------------*/
     int
-Add_Account(const char *label, double init_balance, const char iban[35]);
+Add_Account(const Account *account);
 
 
 /*-----------------------------------------------------------------------------

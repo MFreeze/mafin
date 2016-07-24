@@ -53,15 +53,28 @@
         "Iban: %s "\
         "}", __FILE__, __LINE__, x.account_id, x.label, x.initial_balance, x.iban);
 
+#define PRINTPROD(x) fprintf(stderr, "DEBUG -- %s:%d " #x " : {\n"\
+        "\tId: %d,\n"\
+        "\tLabel: %s,\n"\
+        "\tFather: %d\n"\
+        "}\n", __FILE__, __LINE__, x.product_id, x.label, x.father_id);
+#define OL_PRINTPROD(x) fprintf(stderr, "DEBUG -- %s:%d " #x " : {"\
+        "Id: %d, "\
+        "Label: %s, "\
+        "Father: %d "\
+        "}", __FILE__, __LINE__, x.product_id, x.label, x.father_id);
+
 #else
 #define DEB_PRINT(...)
 #define PRINTVAR(x)
 #define PRINTSTR(x)
 #define PRINTACC(x)
+#define PRINTPROD(x)
 #define OL_DEB_PRINT(...)
 #define OL_PRINTVAR(x)
 #define OL_PRINTSTR(x)
 #define OL_PRINTACC(x)
+#define OL_PRINTPROD(x)
 #endif
 
 #endif

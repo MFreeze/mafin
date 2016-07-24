@@ -34,16 +34,18 @@ main (int argc, char **argv)
 
     printf("Open database ok\n");
 
-    Add_Account("Test", 12.8, NULL);
-    Add_Account("Pouet", 1400, "1349BM24");
-    Add_Account("Pouet", 1400, "1349BM24");
-    Add_Account("Poueta", 1400, "1349BM24");
+    Populate_DB();
 
     Account a;
-    memset(&a, 0, sizeof(Account));
+    RESET(a, Account);
     PRINTACC(a);
 
     return_code = Get_Account_From_Id(1, &a);
+    if (return_code == NO_ENTRY_FOUND)
+        DEB_PRINT("Id 1 not found.\n");
+    PRINTACC(a);
+
+    return_code = Get_Account_From_Id(2, &a);
     if (return_code == NO_ENTRY_FOUND)
         DEB_PRINT("Id 1 not found.\n");
     PRINTACC(a);
@@ -53,7 +55,17 @@ main (int argc, char **argv)
         DEB_PRINT("Id 4 not found.\n");
     PRINTACC(a);
 
-    // TODO Test the Product getters
+    Product prod;
+    RESET(prod, Product);
+    return_code = Get_Product_From_Id(1, &prod);
+    if (return_code == NO_ENTRY_FOUND)
+        DEB_PRINT("Bad news...\n");
+    PRINTPROD(prod);
+    
+    return_code = Get_Product_From_Id(2, &prod);
+    if (return_code == NO_ENTRY_FOUND)
+        DEB_PRINT("Good News!!\n");
+    PRINTPROD(prod);
     
     Close_Database();
     return EXIT_SUCCESS;
