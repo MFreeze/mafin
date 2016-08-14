@@ -29,6 +29,8 @@
 #define NULL_FIELD 4
 #define NOT_INITIALIZED 5
 #define REQUEST_TOO_LONG 6
+#define PARENT_CAT_NON_EXIST 7
+#define ALLOC_FAIL 8
 
 
 /*-----------------------------------------------------------------------------
@@ -45,9 +47,10 @@
     Iban varchar(34));"
 
 #define PROD_TABLE "create table Products(ProdId integer primary key, \
-    FatherProdId integer, \
+    FatherProdId integer,\
     Label varchar(256) not null,\
-    foreign key(FatherProdId) references Products(ProdId));" 
+    foreign key(FatherProdId) references Products(ProdId),\
+    unique(FatherProdId, Label));" 
 
 #define OP_TABLE "create table Operations(OpId integer primary key, \
     Amount float not null, \
@@ -110,7 +113,7 @@
 
 #include <sqlite3.h>
 #include <stdlib.h>
-#include <glib.h>
+//#include <glib.h>
 #include <errno.h>
 #include "debug.h"
 
@@ -163,6 +166,10 @@ Close_Database()
  *-----------------------------------------------------------------------------*/
     int
 Add_Account(const Account *account);
+    int
+Add_Product(const Product *prod);
+    int
+Add_Product_From_Label(const char *label, const char separator, int create_missing);
 
 
 /*-----------------------------------------------------------------------------
@@ -170,15 +177,24 @@ Add_Account(const Account *account);
  *-----------------------------------------------------------------------------*/
     int
 Get_Account_From_Id(int account_id, Account *result);
-
     int
 Get_Product_From_Id(int product_id, Product *result);
+    int
+Get_Product_From_Label(const char *product_label, const char separator, Product *result);
 
 
+/*-----------------------------------------------------------------------------
+ *  Other functions
+ *-----------------------------------------------------------------------------*/
+    int
+Fill_Product_From_Label(const char *label, const char separator, Product *prod);
+
+#ifdef DEBUG
 /*-----------------------------------------------------------------------------
  *  Test functions
  *-----------------------------------------------------------------------------*/
     int
 Populate_DB();
+#endif
 
 #endif
