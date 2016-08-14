@@ -32,6 +32,8 @@ clean:
 mrproper:
 	@echo deep cleaning
 	@rm -f mafin ${OBJ} mafin-${VERSION}.tar.gz
+	@echo removing database
+	@rm mafin.db
 
 dist: mrproper
 	@echo creating dist tarball
